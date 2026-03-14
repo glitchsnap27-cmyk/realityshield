@@ -124,14 +124,16 @@ Design direction implemented:
 
 ## Tech Stack
 
-- TypeScript full-stack
-- Next.js App Router
+- Frontend: Next.js App Router + TypeScript
+- Backend: FastAPI + Python (agent orchestration APIs)
+- LangChain (policy compiler runnable pipeline)
+- LangGraph (AI cycle and stage graph orchestration)
 - Tailwind CSS
 - Hero UI component usage
 - Magic UI-inspired animated timeline and visual effects
-- Zod schema validation
+- Pydantic schema validation
 - Zustand store
-- Server routes for orchestration APIs
+- AWS integrations from Python backend via boto3 (DynamoDB, S3, SNS)
 
 ## Required API Endpoints
 
@@ -195,6 +197,25 @@ Design direction implemented:
 ## Folder Tree
 
 ```text
+backend/
+	app/
+		agents/
+			base_agent.py
+			intake_agent.py
+			dependency_graph_agent.py
+			risk_intelligence_agent.py
+			policy_compiler_agent.py
+			remediation_planner_agent.py
+			patch_executor_agent.py
+			verification_agent.py
+			simulation_agent.py
+			exception_router_agent.py
+			proof_agent.py
+			learning_memory_agent.py
+			__init__.py
+		langgraph_flow.py
+		main.py
+	requirements.txt
 src/
 	app/
 		api/
@@ -218,10 +239,13 @@ src/
 			grid-aura.tsx
 			timeline-reveal.tsx
 	lib/
+		backend-url.ts
 		integrations/aws.ts
 		system.ts
 	store/
 		use-run-store.ts
+	types/
+		run.ts
 scripts/
 	seed.ts
 	run-one-case.ts
@@ -232,10 +256,112 @@ scripts/
 
 ```bash
 npm install
-npm run dev
+python -m pip install -r backend/requirements.txt
+```
+
+Run backend (FastAPI):
+
+```bash
+npm run dev:backend
+```
+
+Run frontend (Next.js):
+
+```bash
+npm run dev:frontend
 ```
 
 Open http://localhost:3000
+
+Backend default URL: http://localhost:8000
+
+Set these in .env for frontend-to-backend routing:
+
+- NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+- BACKEND_CORS_ORIGINS=http://localhost:3000
+
+## Partner Apps Quickstart (SafeDep + Unsiloed)
+
+This project integrates partner capabilities in the FastAPI backend at `backend/app/main.py`.
+
+### SafeDep Cloud Integration
+
+Reference: https://docs.safedep.io/cloud/quickstart
+
+What SafeDep powers in RealityShield:
+
+1. Malicious package intelligence and dependency risk enrichment.
+2. Policy violation inputs for policy-to-action playbooks.
+3. Optional cloud-mode reporting and query workflows.
+
+Required environment variables:
+
+- SAFEDEP_CLOUD_TENANT_DOMAIN
+- SAFEDEP_CLOUD_API_KEY
+
+Quick onboarding options from SafeDep docs:
+
+1. Web onboarding:
+	- Create account at app.safedep.io.
+	- Create tenant and capture tenant domain.
+	- Generate API key.
+2. CLI onboarding:
+	- `brew tap safedep/tap`
+	- `brew install safedep/tap/vet`
+	- `vet cloud quickstart`
+
+Useful verification commands from SafeDep docs:
+
+- `vet auth configure --tenant <tenant-domain>`
+- `vet auth verify`
+
+Optional sync command from SafeDep docs:
+
+- `vet scan -M /path/to/package-lock.json --report-sync --report-sync-project my-project --report-sync-project-version my-project-version`
+
+GitHub Actions partner integration pattern from SafeDep docs:
+
+1. Add GitHub secrets:
+	- SAFEDEP_CLOUD_API_KEY
+	- SAFEDEP_CLOUD_TENANT_DOMAIN
+2. Use `safedep/vet-action@v1` with cloud mode enabled.
+
+### Unsiloed Integration
+
+Reference: https://docs.unsiloed.ai/quickstart
+
+What Unsiloed powers in RealityShield:
+
+1. Optional policy/document parsing in `Policy Compiler Agent` workflows.
+2. Extraction of machine-actionable acceptance criteria from unstructured policy docs.
+
+Required environment variable:
+
+- UNSILOED_API_KEY
+
+Unsiloed API quickstart highlights:
+
+1. Get API key and keep it in environment variables only.
+2. Optional SDK install:
+	- `pip install unsiloed-sdk`
+3. Parse and extract with schema-driven workflows (Python, TypeScript, or REST).
+
+Unsiloed API endpoint details:
+
+- Base URL: `https://prod.visionapi.unsiloed.ai`
+- Auth header: `api-key: <UNSILOED_API_KEY>`
+
+Common use cases mapped to this project:
+
+1. Contract and policy parsing for rule extraction.
+2. Document classification for exception routing.
+3. Structured extraction with confidence scoring for policy gates.
+
+### Partner Mode Matrix
+
+1. Mock mode (`APP_MODE=mock`): deterministic demo, no external dependency required.
+2. Real mode (`APP_MODE=real`): SafeDep Cloud active when tenant and key are set; Unsiloed policy parsing enabled when key is set.
+3. Mixed mode: SafeDep real plus Unsiloed optional fallback supported.
 
 ### Connect GitHub PR Webhook (Verified)
 

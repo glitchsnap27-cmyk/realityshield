@@ -1,6 +1,33 @@
 import fs from "fs";
 import path from "path";
-import { startRun } from "../src/lib/system";
+
+const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
+
+async function startRun(input: {
+  scenario: "malicious-retry" | "clean-pass" | "low-confidence";
+  mode: "mock" | "real";
+  repo: string;
+  branch: string;
+  prNumber: number;
+}) {
+  const res = await fetch(`${backendBase}/api/runs/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`FastAPI backend returned ${res.status}: ${body}`);
+  }
+
+  return res.json() as Promise<{
+    id: string;
+    scenario: string;
+    stage: string;
+    finalDecision?: { status?: string; confidence?: number };
+  }>;
+}
 
 async function main() {
   const scenario =

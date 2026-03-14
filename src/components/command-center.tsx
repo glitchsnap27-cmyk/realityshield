@@ -28,6 +28,7 @@ import {
 import { useRunStore } from "@/store/use-run-store";
 import { GridAura } from "@/components/magic-ui/grid-aura";
 import { TimelineReveal } from "@/components/magic-ui/timeline-reveal";
+import { backendPath } from "@/lib/backend-url";
 
 function statusTone(status?: string) {
   if (status === "merge-ready") return "success" as const;
@@ -61,7 +62,7 @@ export function CommandCenter() {
   );
 
   const blast = selectedRun?.simulationResult;
-  const proofPackHref = selectedRun ? `/api/runs/${selectedRun.id}/proof-pack` : "#";
+  const proofPackHref = selectedRun ? backendPath(`/api/runs/${selectedRun.id}/proof-pack`) : "#";
 
   return (
     <div className="relative mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-10">

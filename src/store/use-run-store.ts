@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import type { Run, StageEvent } from "@/lib/system";
+import { backendPath } from "@/lib/backend-url";
+import type { Run, StageEvent } from "@/types/run";
 
 type Metrics = {
   totalRuns: number;
@@ -27,7 +28,7 @@ type RunState = {
 };
 
 async function json<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  const res = await fetch(backendPath(url), init);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${res.status}`);
@@ -42,7 +43,6 @@ export const useRunStore = create<RunState>((set, get) => ({
   async bootstrap() {
     set({ loading: true, error: undefined });
     try {
-      await json<{ seeded: number }>("/api/runs/start");
       const scenarios: Run["scenario"][] = ["malicious-retry", "clean-pass", "low-confidence"];
       const seededRuns = await Promise.all(
         scenarios.map((scenario, idx) =>
